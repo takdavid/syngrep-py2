@@ -9,6 +9,8 @@ re_notword = re.compile(r'([^-\u2014\w]+)')
 re_wholeword = re.compile(r'^[-\u2014\w]+$')
 treebank_to_wordnet_pos = {'J': 'a', 'R': 'r', 'N': 'n', 'V': 'v'}
 POS_CHUNKS = 100
+postagger = True
+last_output = None
 
 
 def pivotize(pivot_str):
@@ -92,16 +94,3 @@ def output(word, context):
     if last_output != context:
         print("%s:%d %s" % (context[0], context[1], context[2].strip()))
         last_output = context
-
-
-_, pivot_str, corpus_glob = sys.argv
-last_output = None
-verbose = True
-postagger = True
-pivot = pivotize(pivot_str)
-if verbose:
-    sys.stdout.write(pivot[0] + ': ' + ((', '.join(ss.name() for ss in pivot[1])) or '?') + '; ' + ', '.join(sorted(pivot[2])) + '\n')
-for word, context in words(corpus_glob):
-    if choose(word, pivot):
-        output(word, context)
-

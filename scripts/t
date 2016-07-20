@@ -1,0 +1,5 @@
+#!/bin/bash
+cd test-data
+diff expected-child.n.02.txt <(syngrep child.n.02 1984.en.txt)
+diff expected-kid.v.02.txt <(syngrep kid.v.02 1984.en.txt)
+
