@@ -17,7 +17,10 @@ def pivotize(pivot_str):
         poss = [pivot_str.split('.')[1]]
     else:
         synsets = wn.synsets(pivot_str)
-        poss = [ss.name().split('.')[1] for ss in synsets] + ['']
+        poss = [ss.name().split('.')[1] for ss in synsets]
+        if not synsets:
+            global postagger
+            postagger = False
     lemmata = []
     if synsets:
         for ss in synsets:
@@ -61,18 +64,20 @@ def lemmatize(token, pos_list=POS_LIST):
 
 def words(corpus_glob):
     tokenlist = []
+    global postagger
     for batch in chunked(filter(lambda x: is_word(x[0]), tokens(corpus_glob)), POS_CHUNKS):
         tokenlist = tokenlist[-POS_CHUNKS:] + [token for token, context in batch]
-        poss = nltk.pos_tag(tokenlist)
+        poss = nltk.pos_tag(tokenlist) if postagger else []
         poses = [treebank_to_wordnet_pos.get(postuple[-1][0]) for postuple in poss[-POS_CHUNKS:]]
         for i, (token, context) in enumerate(batch):
-            pos = poses[i] if poses else None
-            word = (token, set(lemmatize(token, [pos] if pos else POS_LIST)), pos)
+            pos = poses[i] if postagger else None
+            pos_list = [pos] if postagger and pos else POS_LIST
+            word = (token, set(lemmatize(token, pos_list)), pos)
             yield word, context
 
 
 def choose(word, pivot):
-    if word[2] not in pivot[3]:
+    if postagger and word[2] not in pivot[3]:
         return False
     if word[0] in pivot[2]:
         return True
@@ -91,6 +96,7 @@ def output(word, context):
 
 _, pivot_str, corpus_glob = sys.argv
 last_output = None
+postagger = True
 pivot = pivotize(pivot_str)
 for word, context in words(corpus_glob):
     if choose(word, pivot):
