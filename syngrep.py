@@ -1,4 +1,5 @@
 import glob, re, sys
+from more_itertools import chunked
 import nltk
 from nltk import wordnet
 from nltk.corpus.reader.wordnet import POS_LIST
@@ -6,13 +7,17 @@ from nltk.corpus import wordnet as wnc
 wn = wordnet.wordnet
 re_notword = re.compile(r'([^-\u2014\w]+)')
 re_wholeword = re.compile(r'^[-\u2014\w]+$')
+treebank_to_wordnet_pos = {'J': 'a', 'R': 'r', 'N': 'n', 'V': 'v'}
+POS_CHUNKS = 100
 
 
 def pivotize(pivot_str):
     if '.' in pivot_str:
         synsets = [wn.synset(pivot_str)]
+        poss = [pivot_str.split('.')[1]]
     else:
         synsets = wn.synsets(pivot_str)
+        poss = [ss.name().split('.')[1] for ss in synsets] + ['']
     lemmata = []
     if synsets:
         for ss in synsets:
@@ -21,7 +26,7 @@ def pivotize(pivot_str):
                 lemmata.extend(hypo.lemma_names())
     elif pivot_str:
         lemmata = [pivot_str]
-    return (pivot_str, synsets, set(lemmata))
+    return (pivot_str, synsets, set(lemmata), set(poss))
 
 
 def tokenize(line):
@@ -43,9 +48,9 @@ def tokens(corpus_glob):
                     yield token, (fn, i+1, line)
 
 
-def lemmatize(token, context=None):
+def lemmatize(token, pos_list=POS_LIST):
     yielded = False
-    for pos in POS_LIST:
+    for pos in pos_list:
         lemmas = wnc._morphy(token, pos)
         for lemma in lemmas:
             yield lemma
@@ -55,13 +60,20 @@ def lemmatize(token, context=None):
 
 
 def words(corpus_glob):
-    for token, context in tokens(corpus_glob):
-        if is_word(token):
-            word = (token, set(lemmatize(token, context)), )
+    tokenlist = []
+    for batch in chunked(filter(lambda x: is_word(x[0]), tokens(corpus_glob)), POS_CHUNKS):
+        tokenlist = tokenlist[-POS_CHUNKS:] + [token for token, context in batch]
+        poss = nltk.pos_tag(tokenlist)
+        poses = [treebank_to_wordnet_pos.get(postuple[-1][0]) for postuple in poss[-POS_CHUNKS:]]
+        for i, (token, context) in enumerate(batch):
+            pos = poses[i] if poses else None
+            word = (token, set(lemmatize(token, [pos] if pos else POS_LIST)), pos)
             yield word, context
 
 
 def choose(word, pivot):
+    if word[2] not in pivot[3]:
+        return False
     if word[0] in pivot[2]:
         return True
     for lemma in word[1]:
