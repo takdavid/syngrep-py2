@@ -96,8 +96,11 @@ def output(word, context):
 
 _, pivot_str, corpus_glob = sys.argv
 last_output = None
+verbose = True
 postagger = True
 pivot = pivotize(pivot_str)
+if verbose:
+    sys.stdout.write(pivot[0] + ': ' + ((', '.join(ss.name() for ss in pivot[1])) or '?') + '; ' + ', '.join(sorted(pivot[2])) + '\n')
 for word, context in words(corpus_glob):
     if choose(word, pivot):
         output(word, context)
