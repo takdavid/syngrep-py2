@@ -11,10 +11,13 @@ def pivotize(pivot_str):
     else:
         synsets = wn.synsets(pivot_str)
     lemmata = []
-    for ss in synsets:
-        lemmata.extend(ss.lemma_names())
-        for hypo in ss.hyponyms():
-            lemmata.extend(hypo.lemma_names())
+    if synsets:
+        for ss in synsets:
+            lemmata.extend(ss.lemma_names())
+            for hypo in ss.hyponyms():
+                lemmata.extend(hypo.lemma_names())
+    elif pivot_str:
+        lemmata = [pivot_str]
     return (pivot_str, synsets, lemmata)
 
 
