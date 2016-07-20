@@ -1,12 +1,18 @@
 import glob, re, sys
-
-
+from nltk import wordnet
+wn = wordnet.wordnet
 re_notword = re.compile(r'([^-\u2014\w]+)')
 re_wholeword = re.compile(r'^[-\u2014\w]+$')
 
 
 def pivotize(pivot_str):
-    return pivot_str
+    synsets = wn.synsets(pivot_str)
+    lemmata = []
+    for ss in synsets:
+        lemmata.extend(ss.lemma_names())
+        for hypo in ss.hyponyms():
+            lemmata.extend(hypo.lemma_names())
+    return (pivot_str, synsets, lemmata)
 
 
 def tokenize(line):
@@ -40,7 +46,7 @@ def words(corpus_glob):
 
 
 def choose(word, pivot):
-    return word == pivot
+    return word in pivot[2]
 
 
 def output(word, context):
