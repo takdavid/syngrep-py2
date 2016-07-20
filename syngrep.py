@@ -1,5 +1,8 @@
 import glob, re, sys
+import nltk
 from nltk import wordnet
+from nltk.corpus.reader.wordnet import POS_LIST
+from nltk.corpus import wordnet as wnc
 wn = wordnet.wordnet
 re_notword = re.compile(r'([^-\u2014\w]+)')
 re_wholeword = re.compile(r'^[-\u2014\w]+$')
@@ -40,19 +43,31 @@ def tokens(corpus_glob):
                     yield token, (fn, i+1, line)
 
 
-def lemmatize(token, context):
-    return token
+def lemmatize(token, context=None):
+    yielded = False
+    for pos in POS_LIST:
+        lemmas = wnc._morphy(token, pos)
+        for lemma in lemmas:
+            yield lemma
+            yielded = True
+    if not yielded:
+        yield token
 
 
 def words(corpus_glob):
     for token, context in tokens(corpus_glob):
         if is_word(token):
-            word = lemmatize(token, context)
+            word = (token, lemmatize(token, context), )
             yield word, context
 
 
 def choose(word, pivot):
-    return word in pivot[2]
+    if word[0] in pivot[2]:
+        return True
+    for lemma in word[1]:
+        if lemma in pivot[2]:
+            return True
+    return False
 
 
 def output(word, context):
