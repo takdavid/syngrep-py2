@@ -83,10 +83,14 @@ def choose(word, pivot):
 
 
 def output(word, context):
-    print("%s:%d %s" % (context[0], context[1], context[2].strip()))
+    global last_output
+    if last_output != context:
+        print("%s:%d %s" % (context[0], context[1], context[2].strip()))
+        last_output = context
 
 
 _, pivot_str, corpus_glob = sys.argv
+last_output = None
 pivot = pivotize(pivot_str)
 for word, context in words(corpus_glob):
     if choose(word, pivot):
