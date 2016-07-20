@@ -6,7 +6,10 @@ re_wholeword = re.compile(r'^[-\u2014\w]+$')
 
 
 def pivotize(pivot_str):
-    synsets = wn.synsets(pivot_str)
+    if '.' in pivot_str:
+        synsets = [wn.synset(pivot_str)]
+    else:
+        synsets = wn.synsets(pivot_str)
     lemmata = []
     for ss in synsets:
         lemmata.extend(ss.lemma_names())
