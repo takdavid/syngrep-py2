@@ -21,7 +21,7 @@ def pivotize(pivot_str):
                 lemmata.extend(hypo.lemma_names())
     elif pivot_str:
         lemmata = [pivot_str]
-    return (pivot_str, synsets, lemmata)
+    return (pivot_str, synsets, set(lemmata))
 
 
 def tokenize(line):
@@ -57,7 +57,7 @@ def lemmatize(token, context=None):
 def words(corpus_glob):
     for token, context in tokens(corpus_glob):
         if is_word(token):
-            word = (token, lemmatize(token, context), )
+            word = (token, set(lemmatize(token, context)), )
             yield word, context
 
 
